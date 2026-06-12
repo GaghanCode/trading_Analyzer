@@ -42,14 +42,24 @@ export default function TradeExplanation({ analysis }: TradeExplanationProps) {
             </div>
           </div>
 
-          {/* Trend Confirmation */}
+          {/* Trend Analysis */}
           <div className="p-3 bg-white/5 rounded-lg">
-            <div className="text-white/70">{explanation.trendConfirmation}</div>
+            <div className="text-white/70">{explanation.trendAnalysis}</div>
           </div>
 
-          {/* Momentum */}
+          {/* Setup Reasoning */}
           <div className="p-3 bg-white/5 rounded-lg">
-            <div className="text-white/70">{explanation.momentumObservations}</div>
+            <div className="text-white/70">{explanation.setupReasoning}</div>
+          </div>
+
+          {/* Institutional Perspective */}
+          <div className="p-3 bg-white/5 rounded-lg">
+            <div className="text-white/70">{explanation.institutionalPerspective}</div>
+          </div>
+
+          {/* Scalping Insights */}
+          <div className="p-3 bg-white/5 rounded-lg">
+            <div className="text-white/70">{explanation.scalpingInsights}</div>
           </div>
 
           {/* Risk Considerations */}
