@@ -29,6 +29,16 @@ export default function Home() {
   const [showAnalysis, setShowAnalysis] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [mockAnalysis, setMockAnalysis] = useState<any>(null);
+  const [showLanding, setShowLanding] = useState(true);
+  const [showAnalyzingOverlay, setShowAnalyzingOverlay] = useState(false);
+
+  // Hide landing page after 3 seconds
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setShowLanding(false);
+    }, 3000);
+    return () => clearTimeout(timer);
+  }, []);
 
   // Update positions when market data changes
   useEffect(() => {
@@ -52,8 +62,9 @@ export default function Home() {
   const handleAnalyze = () => {
     if (!marketData) return;
     setIsAnalyzing(true);
+    setShowAnalyzingOverlay(true);
     
-    // Generate fake analysis after 2 seconds
+    // Generate fake analysis after 3 seconds for dramatic effect
     setTimeout(() => {
       const signals = ['STRONG BUY', 'BUY', 'SELL', 'STRONG SELL', 'NEUTRAL'];
       const randomSignal = signals[Math.floor(Math.random() * signals.length)];
@@ -73,8 +84,9 @@ export default function Home() {
         recommendation: randomSignal !== 'NEUTRAL' ? `Consider ${randomSignal.includes('BUY') ? 'long' : 'short'} positions with proper risk management.` : 'Wait for clearer signals before entering positions.'
       });
       setIsAnalyzing(false);
+      setShowAnalyzingOverlay(false);
       setShowAnalysis(true);
-    }, 2000);
+    }, 3000);
   };
 
   const handleBalanceUpdate = () => {
@@ -101,7 +113,137 @@ export default function Home() {
   };
 
   return (
-    <div className="h-screen w-screen flex flex-col bg-background overflow-hidden">
+    <div className="h-screen w-screen flex flex-col bg-background overflow-hidden relative">
+      {/* Landing Page Overlay */}
+      {showLanding && (
+        <motion.div
+          initial={{ opacity: 1 }}
+          animate={{ opacity: 0 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.8, delay: 2.2 }}
+          onAnimationComplete={() => setShowLanding(false)}
+          className="absolute inset-0 z-50 flex items-center justify-center bg-gradient-to-br from-background via-surface to-background"
+        >
+          <div className="text-center">
+            {/* Logo Animation */}
+            <motion.div
+              initial={{ scale: 0, rotate: -180 }}
+              animate={{ scale: 1, rotate: 0 }}
+              transition={{ duration: 0.8, type: 'spring', stiffness: 100 }}
+              className="inline-block mb-6"
+            >
+              <div className="gold-gradient w-24 h-24 rounded-2xl flex items-center justify-center shadow-2xl">
+                <span className="text-background font-bold text-4xl">G</span>
+              </div>
+            </motion.div>
+
+            {/* Title Animation */}
+            <motion.h1
+              initial={{ y: 50, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ duration: 0.6, delay: 0.5 }}
+              className="text-4xl font-bold gold-text mb-2"
+            >
+              Gaghan&apos;s Trading Analysis
+            </motion.h1>
+
+            {/* Subtitle Animation */}
+            <motion.p
+              initial={{ y: 30, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ duration: 0.6, delay: 0.8 }}
+              className="text-white/40 text-sm mb-8"
+            >
+              Professional Demo Trading Platform
+            </motion.p>
+
+            {/* Loading Bar */}
+            <motion.div
+              initial={{ width: 0, opacity: 0 }}
+              animate={{ width: 200, opacity: 1 }}
+              transition={{ duration: 1.5, delay: 1 }}
+              className="h-1 bg-gradient-to-r from-gold to-gold-light rounded-full mx-auto"
+            />
+          </div>
+        </motion.div>
+      )}
+
+      {/* Analyzing Overlay */}
+      {showAnalyzingOverlay && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="absolute inset-0 z-40 flex items-center justify-center bg-black/80 backdrop-blur-md"
+        >
+          <div className="text-center">
+            {/* Spinning Chart Icon */}
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ duration: 0.3 }}
+              className="inline-block mb-6"
+            >
+              <motion.div
+                animate={{ rotate: 360 }}
+                transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
+                className="relative"
+              >
+                <BarChart3 className="w-20 h-20 text-gold" />
+                <motion.div
+                  animate={{ scale: [1, 1.5, 1] }}
+                  transition={{ duration: 1.5, repeat: Infinity }}
+                  className="absolute inset-0 border-4 border-gold rounded-full opacity-50"
+                />
+              </motion.div>
+            </motion.div>
+
+            {/* Analyzing Text */}
+            <motion.h2
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+              className="text-3xl font-bold text-white mb-3"
+            >
+              Analyzing Chart
+            </motion.h2>
+
+            {/* Animated Dots */}
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.5, delay: 0.4 }}
+              className="flex items-center justify-center gap-2 mb-6"
+            >
+              {['Market Structure', 'Trend Analysis', 'Smart Money', 'Key Levels'].map((text, idx) => (
+                <motion.span
+                  key={text}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: [0, 1, 0], y: 0 }}
+                  transition={{ 
+                    duration: 0.8, 
+                    delay: idx * 0.5,
+                    repeat: Infinity,
+                    repeatDelay: 2
+                  }}
+                  className="text-sm text-gold px-3 py-1 bg-gold/10 rounded-full"
+                >
+                  {text}
+                </motion.span>
+              ))}
+            </motion.div>
+
+            {/* Progress Bar */}
+            <motion.div
+              initial={{ width: 0 }}
+              animate={{ width: 300 }}
+              transition={{ duration: 2.5, ease: 'easeInOut' }}
+              className="h-2 bg-gradient-to-r from-gold via-gold-light to-gold rounded-full mx-auto shadow-lg shadow-gold/50"
+            />
+          </div>
+        </motion.div>
+      )}
+
       {/* Top Bar */}
       <header className="flex items-center justify-between px-4 py-2 bg-surface/80 backdrop-blur-sm border-b border-white/5 z-30">
         {/* Left: Logo & Symbol */}
@@ -266,23 +408,47 @@ export default function Home() {
               </div>
             </div>
             <div className="flex-1 overflow-y-auto p-3">
-              {/* Signal Badge */}
-              <div className={`mb-4 p-4 rounded-lg border ${
-                mockAnalysis.signal.includes('BUY') ? 'bg-bullish/10 border-bullish/30' :
-                mockAnalysis.signal.includes('SELL') ? 'bg-bearish/10 border-bearish/30' :
-                'bg-white/5 border-white/10'
-              }`}>
+              {/* Signal Badge with Animation */}
+              <motion.div
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ duration: 0.5, delay: 0.1 }}
+                className={`mb-4 p-4 rounded-lg border ${
+                  mockAnalysis.signal.includes('BUY') ? 'bg-bullish/10 border-bullish/30' :
+                  mockAnalysis.signal.includes('SELL') ? 'bg-bearish/10 border-bearish/30' :
+                  'bg-white/5 border-white/10'
+                }`}
+              >
                 <div className="text-xs text-white/60 mb-1">Signal</div>
-                <div className={`text-2xl font-bold ${
-                  mockAnalysis.signal.includes('BUY') ? 'text-bullish' :
-                  mockAnalysis.signal.includes('SELL') ? 'text-bearish' :
-                  'text-white'
-                }`}>{mockAnalysis.signal}</div>
-                <div className="text-xs text-white/50 mt-1">Confidence: {mockAnalysis.confidence}%</div>
-              </div>
+                <motion.div
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  transition={{ duration: 0.5, type: 'spring', delay: 0.2 }}
+                  className={`text-2xl font-bold ${
+                    mockAnalysis.signal.includes('BUY') ? 'text-bullish' :
+                    mockAnalysis.signal.includes('SELL') ? 'text-bearish' :
+                    'text-white'
+                  }`}
+                >
+                  {mockAnalysis.signal}
+                </motion.div>
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.5, delay: 0.4 }}
+                  className="text-xs text-white/50 mt-1"
+                >
+                  Confidence: {mockAnalysis.confidence}%
+                </motion.div>
+              </motion.div>
 
-              {/* Market Bias */}
-              <div className="mb-4 p-3 bg-white/5 rounded-lg">
+              {/* Market Bias with Animation */}
+              <motion.div
+                initial={{ x: -20, opacity: 0 }}
+                animate={{ x: 0, opacity: 1 }}
+                transition={{ duration: 0.5, delay: 0.3 }}
+                className="mb-4 p-3 bg-white/5 rounded-lg"
+              >
                 <div className="text-xs text-white/60 mb-1">Market Bias</div>
                 <div className={`text-lg font-bold ${
                   mockAnalysis.marketBias === 'BULLISH' ? 'text-bullish' :
@@ -290,29 +456,50 @@ export default function Home() {
                   'text-white'
                 }`}>{mockAnalysis.marketBias}</div>
                 <div className="text-xs text-white/50 mt-1">Trend Strength: {mockAnalysis.trendStrength}%</div>
-              </div>
+              </motion.div>
 
-              {/* Key Levels */}
-              <div className="mb-4">
+              {/* Key Levels with Staggered Animation */}
+              <motion.div
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ duration: 0.5, delay: 0.5 }}
+                className="mb-4"
+              >
                 <div className="text-xs text-white/60 mb-2">Key Levels</div>
                 {mockAnalysis.keyLevels.map((level: string, idx: number) => (
-                  <div key={idx} className="p-2 bg-white/5 rounded mb-1 text-xs text-white/70 font-mono">
+                  <motion.div
+                    key={idx}
+                    initial={{ x: -20, opacity: 0 }}
+                    animate={{ x: 0, opacity: 1 }}
+                    transition={{ duration: 0.4, delay: 0.6 + idx * 0.1 }}
+                    className="p-2 bg-white/5 rounded mb-1 text-xs text-white/70 font-mono"
+                  >
                     {level}
-                  </div>
+                  </motion.div>
                 ))}
-              </div>
+              </motion.div>
 
-              {/* Summary */}
-              <div className="mb-4 p-3 bg-white/5 rounded-lg">
+              {/* Summary with Animation */}
+              <motion.div
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ duration: 0.5, delay: 0.9 }}
+                className="mb-4 p-3 bg-white/5 rounded-lg"
+              >
                 <div className="text-xs text-white/60 mb-1">Analysis Summary</div>
                 <div className="text-xs text-white/70 leading-relaxed">{mockAnalysis.summary}</div>
-              </div>
+              </motion.div>
 
-              {/* Recommendation */}
-              <div className="p-3 bg-gold/10 border border-gold/30 rounded-lg">
+              {/* Recommendation with Animation */}
+              <motion.div
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ duration: 0.5, delay: 1.1, type: 'spring' }}
+                className="p-3 bg-gold/10 border border-gold/30 rounded-lg"
+              >
                 <div className="text-xs text-gold mb-1 font-semibold">Recommendation</div>
                 <div className="text-xs text-white/70">{mockAnalysis.recommendation}</div>
-              </div>
+              </motion.div>
             </div>
           </motion.div>
         ) : (
