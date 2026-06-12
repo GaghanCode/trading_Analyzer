@@ -31,6 +31,7 @@ export default function Home() {
   const [mockAnalysis, setMockAnalysis] = useState<any>(null);
   const [showLanding, setShowLanding] = useState(true);
   const [showAnalyzingOverlay, setShowAnalyzingOverlay] = useState(false);
+  const [chartLoaded, setChartLoaded] = useState(false);
 
   // Hide landing page after 3 seconds
   useEffect(() => {
@@ -368,15 +369,36 @@ export default function Home() {
       <div className="flex-1 flex overflow-hidden">
         {/* Chart Area */}
         <div className="flex-1 flex flex-col relative">
-          <TradingViewChart 
-            symbol={marketData ? getSymbolConfig(marketData.symbol).tradingViewSymbol : 'OANDA:XAUUSD'}
-            positions={positions}
-            currentPrice={marketData?.price || 0}
-            onUpdateTPSL={updatePositionTPSL}
-            onClosePosition={handleClosePosition}
-            onPriceSelect={handlePriceSelected}
-            isSelectingPrice={isSelectingPrice}
-          />
+          {!chartLoaded && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              className="absolute inset-0 flex items-center justify-center bg-surface/50 backdrop-blur-sm z-20"
+            >
+              <div className="text-center">
+                <motion.div
+                  animate={{ rotate: 360 }}
+                  transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
+                  className="inline-block mb-4"
+                >
+                  <div className="w-16 h-16 border-4 border-gold/30 border-t-gold rounded-full" />
+                </motion.div>
+                <div className="text-white/60 text-sm">Loading Trading Chart...</div>
+              </div>
+            </motion.div>
+          )}
+          <div className={chartLoaded ? 'opacity-100' : 'opacity-0'}>
+            <TradingViewChart 
+              symbol={marketData ? getSymbolConfig(marketData.symbol).tradingViewSymbol : 'OANDA:XAUUSD'}
+              positions={positions}
+              currentPrice={marketData?.price || 0}
+              onUpdateTPSL={updatePositionTPSL}
+              onClosePosition={handleClosePosition}
+              onPriceSelect={handlePriceSelected}
+              isSelectingPrice={isSelectingPrice}
+              onChartReady={() => setChartLoaded(true)}
+            />
+          </div>
         </div>
 
         {/* Right Panel */}

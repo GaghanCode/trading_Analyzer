@@ -13,6 +13,7 @@ interface TradingViewChartProps {
   onClosePosition?: (id: string, price: number) => void;
   onPriceSelect?: (price: number) => void;
   isSelectingPrice?: boolean;
+  onChartReady?: () => void;
 }
 
 export default function TradingViewChart({ 
@@ -23,6 +24,7 @@ export default function TradingViewChart({
   onClosePosition,
   onPriceSelect,
   isSelectingPrice = false,
+  onChartReady,
 }: TradingViewChartProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const widgetRef = useRef<any>(null);
@@ -117,6 +119,11 @@ export default function TradingViewChart({
           save_image: false,
           hide_top_toolbar: false,
         });
+        
+        // Notify parent that chart is ready
+        if (onChartReady) {
+          setTimeout(() => onChartReady(), 500);
+        }
       }
     };
 
