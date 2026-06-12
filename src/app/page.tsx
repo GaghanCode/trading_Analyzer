@@ -1,65 +1,305 @@
-import Image from "next/image";
+'use client';
+
+import { useEffect, useState } from 'react';
+import { motion } from 'framer-motion';
+import { BarChart3, Settings, DollarSign, TrendingUp } from 'lucide-react';
+import { useRealMarketData } from '@/hooks/useRealMarketData';
+import { useTrading } from '@/hooks/useTrading';
+import { useAnalysis } from '@/hooks/useAnalysis';
+import TradingViewChart from '@/components/chart/TradingViewChart';
+import OrderPanel from '@/components/trading/OrderPanel';
+import AnalysisPanel from '@/components/analysis/AnalysisPanel';
+import PremiumButton from '@/components/ui/PremiumButton';
+import { getSymbolConfig } from '@/lib/symbol-registry';
 
 export default function Home() {
+  const { marketData, isConnected, lastUpdate } = useRealMarketData();
+  const {
+    positions,
+    accountState,
+    openBuy,
+    openSell,
+    closePosition,
+    updatePositionTPSL,
+    updatePositions,
+    getMarginRequired,
+    setBalance,
+  } = useTrading();
+  const { analysis, isAnalyzing, analyze, error } = useAnalysis();
+  const [showAnalysis, setShowAnalysis] = useState(false);
+  const [showBalanceEdit, setShowBalanceEdit] = useState(false);
+  const [newBalance, setNewBalance] = useState('10000');
+  const [isSelectingPrice, setIsSelectingPrice] = useState(false);
+  const [chartPriceSelectCallback, setChartPriceSelectCallback] = useState<((price: number) => void) | null>(null);
+
+  // Update positions when market data changes
+  useEffect(() => {
+    if (marketData) {
+      updatePositions(marketData.price);
+    }
+  }, [marketData?.price, updatePositions]);
+
+  const handleBuy = (qty: number, entryPrice: number, currentPrice: number, symbol: string, sl: number | null, tp: number | null) => {
+    return openBuy(qty, entryPrice, currentPrice, symbol, sl, tp);
+  };
+
+  const handleSell = (qty: number, entryPrice: number, currentPrice: number, symbol: string, sl: number | null, tp: number | null) => {
+    return openSell(qty, entryPrice, currentPrice, symbol, sl, tp);
+  };
+
+  const handleClosePosition = (id: string, price: number) => {
+    return closePosition(id, price);
+  };
+
+  const handleAnalyze = () => {
+    if (!marketData) {
+      console.warn('No market data available for analysis');
+      return;
+    }
+    console.log('Triggering analysis...');
+    analyze(marketData);
+    setShowAnalysis(true);
+  };
+
+  const handleBalanceUpdate = () => {
+    const amount = parseFloat(newBalance);
+    if (amount > 0) {
+      setBalance(amount);
+      setShowBalanceEdit(false);
+    }
+  };
+
+  // Handle chart price selection registration from OrderPanel
+  const handleChartPriceSelect = (callback: (price: number) => void) => {
+    setChartPriceSelectCallback(() => callback);
+    setIsSelectingPrice(!!callback);
+  };
+
+  // Handle price selected from chart
+  const handlePriceSelected = (price: number) => {
+    if (chartPriceSelectCallback) {
+      chartPriceSelectCallback(price);
+      setIsSelectingPrice(false);
+      setChartPriceSelectCallback(null);
+    }
+  };
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <div className="h-screen w-screen flex flex-col bg-background overflow-hidden">
+      {/* Top Bar */}
+      <header className="flex items-center justify-between px-4 py-2 bg-surface/80 backdrop-blur-sm border-b border-white/5 z-30">
+        {/* Left: Logo & Symbol */}
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
+            <div className="gold-gradient w-8 h-8 rounded-lg flex items-center justify-center">
+              <span className="text-background font-bold text-sm">G</span>
+            </div>
+            <div>
+              <div className="text-sm font-bold gold-text">Gaghan&apos;s Trading Analysis</div>
+              <div className="text-[10px] text-white/30">Professional Demo Trading Platform</div>
+            </div>
+          </div>
+          {marketData && (
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-white/5 rounded-lg border border-white/10">
+              <span className="text-xs text-white/40">Symbol:</span>
+              <span className="text-xs font-bold text-gold">{marketData.symbol}</span>
+            </div>
+          )}
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+
+        {/* Center: Analyze Button */}
+        <div className="flex items-center gap-3">
+          <PremiumButton
+            onClick={handleAnalyze}
+            loading={isAnalyzing}
+            icon={<BarChart3 className="w-4 h-4" />}
+            size="sm"
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
+            Analyze Chart
+          </PremiumButton>
+        </div>
+
+        {/* Right: Account State & Connection Status */}
+        <div className="flex items-center gap-6">
+          {marketData && (
+            <div className="flex items-center gap-2">
+              <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500 animate-pulse' : 'bg-red-500'}`} />
+              <span className="text-[10px] text-white/40">
+                {isConnected ? 'LIVE' : 'DISCONNECTED'}
+              </span>
+            </div>
+          )}
+          {marketData && (
+            <div className="flex items-center gap-4 text-xs">
+              {/* Balance */}
+              <div className="flex items-center gap-2">
+                <DollarSign className="w-3.5 h-3.5 text-gold" />
+                <span className="text-white/40">Balance:</span>
+                <span className="text-white font-semibold">${accountState.balance.toFixed(2)}</span>
+                <button
+                  onClick={() => setShowBalanceEdit(true)}
+                  className="p-1 hover:bg-white/10 rounded transition-colors"
+                >
+                  <Settings className="w-3 h-3 text-white/30" />
+                </button>
+              </div>
+              
+              {/* Equity */}
+              <div className="flex items-center gap-2">
+                <TrendingUp className="w-3.5 h-3.5 text-bullish" />
+                <span className="text-white/40">Equity:</span>
+                <span className={`font-semibold ${accountState.equity >= accountState.balance ? 'text-bullish' : 'text-bearish'}`}>
+                  ${accountState.equity.toFixed(2)}
+                </span>
+              </div>
+              
+              {/* PnL */}
+              <div className="flex items-center gap-2">
+                <TrendingUp className="w-3.5 h-3.5" style={{ color: accountState.openPnl >= 0 ? '#00c853' : '#ff1744' }} />
+                <span className="text-white/40">PnL:</span>
+                <span className={accountState.openPnl >= 0 ? 'text-bullish font-semibold' : 'text-bearish font-semibold'}>
+                  {accountState.openPnl >= 0 ? '+' : ''}${accountState.openPnl.toFixed(2)}
+                </span>
+              </div>
+              
+              {/* Free Margin */}
+              <div className="flex items-center gap-2">
+                <span className="text-white/40">Free:</span>
+                <span className="text-white font-semibold">${accountState.freeMargin.toFixed(2)}</span>
+              </div>
+            </div>
+          )}
+        </div>
+      </header>
+
+      {/* Balance Edit Modal */}
+      {showBalanceEdit && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center">
+          <motion.div
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="bg-surface border border-white/10 rounded-xl p-6 w-96"
+          >
+            <div className="text-lg font-bold text-white mb-4">Set Demo Account Balance</div>
+            <input
+              type="number"
+              value={newBalance}
+              onChange={(e) => setNewBalance(e.target.value)}
+              className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white text-lg mb-4 focus:outline-none focus:border-gold/50"
+              placeholder="Enter balance amount"
             />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+            <div className="flex gap-2">
+              <button
+                onClick={handleBalanceUpdate}
+                className="flex-1 py-2 bg-gold text-background font-bold rounded-lg hover:bg-gold-light transition-colors"
+              >
+                Update Balance
+              </button>
+              <button
+                onClick={() => setShowBalanceEdit(false)}
+                className="flex-1 py-2 bg-white/10 text-white font-bold rounded-lg hover:bg-white/20 transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          </motion.div>
         </div>
-      </main>
+      )}
+
+      {/* Main Content */}
+      <div className="flex-1 flex overflow-hidden">
+        {/* Chart Area */}
+        <div className="flex-1 flex flex-col relative">
+          <TradingViewChart 
+            symbol={marketData ? getSymbolConfig(marketData.symbol).tradingViewSymbol : 'OANDA:XAUUSD'}
+            positions={positions}
+            currentPrice={marketData?.price || 0}
+            onUpdateTPSL={updatePositionTPSL}
+            onClosePosition={handleClosePosition}
+            onPriceSelect={handlePriceSelected}
+            isSelectingPrice={isSelectingPrice}
+          />
+        </div>
+
+        {/* Right Panel */}
+        {showAnalysis && analysis ? (
+          <motion.div
+            initial={{ width: 0, opacity: 0 }}
+            animate={{ width: 420, opacity: 1 }}
+            exit={{ width: 0, opacity: 0 }}
+            transition={{ duration: 0.3 }}
+            className="bg-surface/50 backdrop-blur-sm border-l border-white/5 h-full flex flex-col"
+          >
+            <div className="flex items-center justify-between p-3 border-b border-white/5">
+              <div className="text-sm font-semibold text-white">Analysis</div>
+              <div className="flex items-center gap-2">
+                <PremiumButton
+                  onClick={handleAnalyze}
+                  loading={isAnalyzing}
+                  icon={<BarChart3 className="w-3.5 h-3.5" />}
+                  size="sm"
+                >
+                  Re-Analyze
+                </PremiumButton>
+                <button
+                  onClick={() => setShowAnalysis(false)}
+                  className="px-3 py-1.5 text-xs text-white/50 hover:text-white/70 bg-white/5 rounded-lg transition-colors"
+                >
+                  ← Close
+                </button>
+              </div>
+            </div>
+            <div className="flex-1 overflow-y-auto p-3">
+              {error && (
+                <div className="mb-3 p-3 bg-bearish/10 border border-bearish/30 rounded-lg">
+                  <div className="text-xs text-bearish font-semibold">Analysis Error</div>
+                  <div className="text-[11px] text-bearish/80 mt-1">{error}</div>
+                </div>
+              )}
+              <AnalysisPanel analysis={analysis} isOpen={showAnalysis} />
+            </div>
+          </motion.div>
+        ) : (
+          <motion.div
+            initial={{ width: 0, opacity: 0 }}
+            animate={{ width: 380, opacity: 1 }}
+            transition={{ duration: 0.3 }}
+            className="bg-surface/50 backdrop-blur-sm border-l border-white/5 h-full flex flex-col"
+          >
+            <div className="flex items-center justify-between p-3 border-b border-white/5">
+              <div className="text-sm font-semibold text-white">Trading Panel</div>
+              <PremiumButton
+                onClick={handleAnalyze}
+                loading={isAnalyzing}
+                icon={<BarChart3 className="w-3.5 h-3.5" />}
+                size="sm"
+              >
+                Analyze Chart
+              </PremiumButton>
+            </div>
+            <div className="flex-1 overflow-y-auto">
+              <OrderPanel
+                marketData={marketData}
+                positions={positions}
+                accountState={accountState}
+                onBuy={handleBuy}
+                onSell={handleSell}
+                onClosePosition={handleClosePosition}
+                onUpdateTPSL={updatePositionTPSL}
+                getMarginRequired={getMarginRequired}
+                onChartPriceSelect={handleChartPriceSelect}
+              />
+            </div>
+          </motion.div>
+        )}
+      </div>
+
+      {/* Bottom Bar */}
+      <footer className="flex items-center justify-between px-4 py-2 bg-surface/80 backdrop-blur-sm border-t border-white/5 z-30">
+        <div className="text-[10px] text-white/20">
+          Gaghan&apos;s Trading Analysis v2.0 • Demo Trading with 1:30 Leverage • Professional Strategies
+        </div>
+      </footer>
     </div>
   );
 }
