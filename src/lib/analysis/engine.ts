@@ -182,6 +182,9 @@ function analyzeSmartMoney(
     retailTraps,
     smartMoneyPositioning,
     likelyNextMove,
+    orderBlocks: [],
+    fairValueGaps: [],
+    premiumDiscountZone: { premium: 0, discount: 0, current: 'equilibrium' },
   };
 }
 
