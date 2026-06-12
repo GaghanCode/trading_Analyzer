@@ -2,14 +2,11 @@
 
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
-import { BarChart3, Settings, DollarSign, TrendingUp } from 'lucide-react';
+import { DollarSign, TrendingUp, Settings } from 'lucide-react';
 import { useRealMarketData } from '@/hooks/useRealMarketData';
 import { useTrading } from '@/hooks/useTrading';
-import { useAnalysis } from '@/hooks/useAnalysis';
 import TradingViewChart from '@/components/chart/TradingViewChart';
 import OrderPanel from '@/components/trading/OrderPanel';
-import AnalysisPanel from '@/components/analysis/AnalysisPanel';
-import PremiumButton from '@/components/ui/PremiumButton';
 import { getSymbolConfig } from '@/lib/symbol-registry';
 
 export default function Home() {
@@ -25,8 +22,6 @@ export default function Home() {
     getMarginRequired,
     setBalance,
   } = useTrading();
-  const { analysis, isAnalyzing, analyze, error } = useAnalysis();
-  const [showAnalysis, setShowAnalysis] = useState(false);
   const [showBalanceEdit, setShowBalanceEdit] = useState(false);
   const [newBalance, setNewBalance] = useState('10000');
   const [isSelectingPrice, setIsSelectingPrice] = useState(false);
@@ -49,16 +44,6 @@ export default function Home() {
 
   const handleClosePosition = (id: string, price: number) => {
     return closePosition(id, price);
-  };
-
-  const handleAnalyze = () => {
-    if (!marketData) {
-      console.warn('No market data available for analysis');
-      return;
-    }
-    console.log('Triggering analysis...');
-    analyze(marketData);
-    setShowAnalysis(true);
   };
 
   const handleBalanceUpdate = () => {
@@ -105,18 +90,6 @@ export default function Home() {
               <span className="text-xs font-bold text-gold">{marketData.symbol}</span>
             </div>
           )}
-        </div>
-
-        {/* Center: Analyze Button */}
-        <div className="flex items-center gap-3">
-          <PremiumButton
-            onClick={handleAnalyze}
-            loading={isAnalyzing}
-            icon={<BarChart3 className="w-4 h-4" />}
-            size="sm"
-          >
-            Analyze Chart
-          </PremiumButton>
         </div>
 
         {/* Right: Account State & Connection Status */}
@@ -221,77 +194,30 @@ export default function Home() {
           />
         </div>
 
-        {/* Right Panel */}
-        {showAnalysis && analysis ? (
-          <motion.div
-            initial={{ width: 0, opacity: 0 }}
-            animate={{ width: 420, opacity: 1 }}
-            exit={{ width: 0, opacity: 0 }}
-            transition={{ duration: 0.3 }}
-            className="bg-surface/50 backdrop-blur-sm border-l border-white/5 h-full flex flex-col"
-          >
-            <div className="flex items-center justify-between p-3 border-b border-white/5">
-              <div className="text-sm font-semibold text-white">Analysis</div>
-              <div className="flex items-center gap-2">
-                <PremiumButton
-                  onClick={handleAnalyze}
-                  loading={isAnalyzing}
-                  icon={<BarChart3 className="w-3.5 h-3.5" />}
-                  size="sm"
-                >
-                  Re-Analyze
-                </PremiumButton>
-                <button
-                  onClick={() => setShowAnalysis(false)}
-                  className="px-3 py-1.5 text-xs text-white/50 hover:text-white/70 bg-white/5 rounded-lg transition-colors"
-                >
-                  ← Close
-                </button>
-              </div>
-            </div>
-            <div className="flex-1 overflow-y-auto p-3">
-              {error && (
-                <div className="mb-3 p-3 bg-bearish/10 border border-bearish/30 rounded-lg">
-                  <div className="text-xs text-bearish font-semibold">Analysis Error</div>
-                  <div className="text-[11px] text-bearish/80 mt-1">{error}</div>
-                </div>
-              )}
-              <AnalysisPanel analysis={analysis} isOpen={showAnalysis} />
-            </div>
-          </motion.div>
-        ) : (
-          <motion.div
-            initial={{ width: 0, opacity: 0 }}
-            animate={{ width: 380, opacity: 1 }}
-            transition={{ duration: 0.3 }}
-            className="bg-surface/50 backdrop-blur-sm border-l border-white/5 h-full flex flex-col"
-          >
-            <div className="flex items-center justify-between p-3 border-b border-white/5">
-              <div className="text-sm font-semibold text-white">Trading Panel</div>
-              <PremiumButton
-                onClick={handleAnalyze}
-                loading={isAnalyzing}
-                icon={<BarChart3 className="w-3.5 h-3.5" />}
-                size="sm"
-              >
-                Analyze Chart
-              </PremiumButton>
-            </div>
-            <div className="flex-1 overflow-y-auto">
-              <OrderPanel
-                marketData={marketData}
-                positions={positions}
-                accountState={accountState}
-                onBuy={handleBuy}
-                onSell={handleSell}
-                onClosePosition={handleClosePosition}
-                onUpdateTPSL={updatePositionTPSL}
-                getMarginRequired={getMarginRequired}
-                onChartPriceSelect={handleChartPriceSelect}
-              />
-            </div>
-          </motion.div>
-        )}
+        {/* Right Panel - Trading Only */}
+        <motion.div
+          initial={{ width: 0, opacity: 0 }}
+          animate={{ width: 380, opacity: 1 }}
+          transition={{ duration: 0.3 }}
+          className="bg-surface/50 backdrop-blur-sm border-l border-white/5 h-full flex flex-col"
+        >
+          <div className="flex items-center justify-between p-3 border-b border-white/5">
+            <div className="text-sm font-semibold text-white">Trading Panel</div>
+          </div>
+          <div className="flex-1 overflow-y-auto">
+            <OrderPanel
+              marketData={marketData}
+              positions={positions}
+              accountState={accountState}
+              onBuy={handleBuy}
+              onSell={handleSell}
+              onClosePosition={handleClosePosition}
+              onUpdateTPSL={updatePositionTPSL}
+              getMarginRequired={getMarginRequired}
+              onChartPriceSelect={handleChartPriceSelect}
+            />
+          </div>
+        </motion.div>
       </div>
 
       {/* Bottom Bar */}
